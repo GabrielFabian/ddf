@@ -20,6 +20,7 @@
         <version>2.12.0-SNAPSHOT</version>
     </parent>
     <artifactId>spatial-wfs-source</artifactId>
+    <packaging>bundle</packaging>
     <name>DDF :: Spatial :: WFS :: Source</name>
     <dependencies>
         <dependency>
@@ -101,6 +102,27 @@
         </resources>
         <plugins>
             <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+                        <Export-Package/>
+                        <Embed-Dependency>
+                            spatial-wfs-v1_0_0-schema-bindings,
+                            spatial-wfs-common,
+                            spatial-ogc-common,
+                            spatial-wfs-converter;scope=compile|runtime,
+                            catalog-core-api-impl,
+                            geospatial,
+                            security-core-impl
+                        </Embed-Dependency>
+                        <Embed-Transitive>true</Embed-Transitive>
+                    </instructions>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <executions>
@@ -130,7 +152,6 @@
                                             <value>COVEREDRATIO</value>
                                             <minimum>0</minimum>
                                         </limit>
-
                                     </limits>
                                 </rule>
                             </rules>
