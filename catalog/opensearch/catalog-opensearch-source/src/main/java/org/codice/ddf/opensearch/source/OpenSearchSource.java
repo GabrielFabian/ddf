@@ -135,6 +135,8 @@ public class OpenSearchSource implements FederatedSource, ConfiguredService {
 
   protected boolean shouldConvertToBBox;
 
+  protected int numMultiPointRadiusVertices;
+
   protected PropertyResolver endpointUrl;
 
   protected final FilterAdapter filterAdapter;
@@ -313,7 +315,8 @@ public class OpenSearchSource implements FederatedSource, ConfiguredService {
     final SpatialSearch spatialSearch =
         createCombinedSpatialSearch(
             openSearchFilterVisitorObject.getPointRadiusSearches(),
-            openSearchFilterVisitorObject.getGeometrySearches());
+            openSearchFilterVisitorObject.getGeometrySearches(),
+            numMultiPointRadiusVertices);
     final TemporalFilter temporalSearch = openSearchFilterVisitorObject.getTemporalSearch();
     final String idSearch =
         StringUtils.defaultIfEmpty(
@@ -753,6 +756,22 @@ public class OpenSearchSource implements FederatedSource, ConfiguredService {
     this.shouldConvertToBBox = shouldConvertToBBox;
   }
 
+  /**
+   * Get the number of verticies an approximation polygon will have when converting a multi
+   * point-radius search to a multi-polygon search.
+   */
+  public int getNumMultiPointRadiusVertices() {
+    return numMultiPointRadiusVertices;
+  }
+
+  /**
+   * Sets the number of verticies to use when approximating a polygon to fit to a multi point-radius
+   * search.
+   */
+  public void setNumMultiPointRadiusVertices(int numMultiPointRadiusVertices) {
+    this.numMultiPointRadiusVertices = numMultiPointRadiusVertices;
+  }
+
   @Override
   public ResourceResponse retrieveResource(URI uri, Map<String, Serializable> requestProperties)
       throws ResourceNotFoundException, ResourceNotSupportedException, IOException {
@@ -1018,7 +1037,9 @@ public class OpenSearchSource implements FederatedSource, ConfiguredService {
    */
   @Nullable
   protected SpatialSearch createCombinedSpatialSearch(
-      final Queue<PointRadius> pointRadiusSearches, final Queue<Geometry> geometrySearches) {
+      final Queue<PointRadius> pointRadiusSearches,
+      final Queue<Geometry> geometrySearches,
+      final int numMultiPointRadiusVertices) {
     Geometry geometrySearch = null;
     BoundingBox boundingBox = null;
     PointRadius pointRadius = null;
@@ -1041,15 +1062,9 @@ public class OpenSearchSource implements FederatedSource, ConfiguredService {
          * collection for later processing *
          */
         for (PointRadius search : pointRadiusSearches) {
-          /**
-           * first convert to a bounding box approximation, extract the coordinates and build a
-           * geometry polygon
-           */
-          BoundingBox bbox = BoundingBoxUtils.createBoundingBox(search);
-          List bboxCoordinate = BoundingBoxUtils.getBoundingBoxCoordinatesList(bbox);
-          List<List> coordinates = new ArrayList<>();
-          coordinates.add(bboxCoordinate);
-          combinedGeometrySearches.add(ddf.geo.formatter.Polygon.buildPolygon(coordinates));
+          Geometry circle =
+              PolygonUtils.convertPointRadiusToCircle(search, numMultiPointRadiusVertices);
+          combinedGeometrySearches.add(circle);
           LOGGER.debug(
               "Point radius searches are converts it to a (rough approximation) square using Vincenty's formula (direct)");
         }
