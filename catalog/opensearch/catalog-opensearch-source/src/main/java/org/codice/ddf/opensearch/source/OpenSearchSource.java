@@ -1063,7 +1063,7 @@ public class OpenSearchSource implements FederatedSource, ConfiguredService {
          */
         for (PointRadius search : pointRadiusSearches) {
           Geometry circle =
-              PolygonUtils.convertPointRadiusToCircle(search, numMultiPointRadiusVertices);
+              PolygonUtils.convertPointRadiusToCirclePolygon(search, numMultiPointRadiusVertices);
           combinedGeometrySearches.add(circle);
           LOGGER.debug(
               "Point radius searches are converts it to a (rough approximation) square using Vincenty's formula (direct)");
