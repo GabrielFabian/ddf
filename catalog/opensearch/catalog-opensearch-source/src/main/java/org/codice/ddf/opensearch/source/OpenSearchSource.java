@@ -118,6 +118,8 @@ public class OpenSearchSource implements FederatedSource, ConfiguredService {
   @SuppressWarnings("squid:S2068" /*Key for the requestProperties map, not a hardcoded password*/)
   protected static final String PASSWORD_PROPERTY = "password";
 
+  private static final int MIN_DISTANCE_TOLERANCE = 100; // meters
+
   private static final GeometryFactory GEOMETRY_FACTORY = new GeometryFactory();
 
   private static final Logger LOGGER = LoggerFactory.getLogger(OpenSearchSource.class);
@@ -136,6 +138,8 @@ public class OpenSearchSource implements FederatedSource, ConfiguredService {
   protected boolean shouldConvertToBBox;
 
   protected int numMultiPointRadiusVertices;
+
+  protected int distanceTolerance;
 
   protected PropertyResolver endpointUrl;
 
@@ -316,7 +320,8 @@ public class OpenSearchSource implements FederatedSource, ConfiguredService {
         createCombinedSpatialSearch(
             openSearchFilterVisitorObject.getPointRadiusSearches(),
             openSearchFilterVisitorObject.getGeometrySearches(),
-            numMultiPointRadiusVertices);
+            numMultiPointRadiusVertices,
+            distanceTolerance);
     final TemporalFilter temporalSearch = openSearchFilterVisitorObject.getTemporalSearch();
     final String idSearch =
         StringUtils.defaultIfEmpty(
@@ -772,6 +777,26 @@ public class OpenSearchSource implements FederatedSource, ConfiguredService {
     this.numMultiPointRadiusVertices = numMultiPointRadiusVertices;
   }
 
+  /**
+   * Get the number of verticies an approximation polygon will have when converting a multi
+   * point-radius search to a multi-polygon search.
+   */
+  public int getDistanceTolerance() {
+    return distanceTolerance;
+  }
+
+  /**
+   * Sets the number of verticies to use when approximating a polygon to fit to a multi point-radius
+   * search.
+   */
+  public void setDistanceTolerance(int distanceTolerance) {
+    if (distanceTolerance < MIN_DISTANCE_TOLERANCE) {
+      this.distanceTolerance = MIN_DISTANCE_TOLERANCE;
+    } else {
+      this.distanceTolerance = distanceTolerance;
+    }
+  }
+
   @Override
   public ResourceResponse retrieveResource(URI uri, Map<String, Serializable> requestProperties)
       throws ResourceNotFoundException, ResourceNotSupportedException, IOException {
@@ -1039,7 +1064,8 @@ public class OpenSearchSource implements FederatedSource, ConfiguredService {
   protected SpatialSearch createCombinedSpatialSearch(
       final Queue<PointRadius> pointRadiusSearches,
       final Queue<Geometry> geometrySearches,
-      final int numMultiPointRadiusVertices) {
+      final int numMultiPointRadiusVertices,
+      final int distanceTolerance) {
     Geometry geometrySearch = null;
     BoundingBox boundingBox = null;
     PointRadius pointRadius = null;
@@ -1063,10 +1089,12 @@ public class OpenSearchSource implements FederatedSource, ConfiguredService {
          */
         for (PointRadius search : pointRadiusSearches) {
           Geometry circle =
-              PolygonUtils.convertPointRadiusToCirclePolygon(search, numMultiPointRadiusVertices);
+              PolygonUtils.convertPointRadiusToCirclePolygon(
+                  search, numMultiPointRadiusVertices, distanceTolerance);
           combinedGeometrySearches.add(circle);
           LOGGER.debug(
-              "Point radius searches are converts it to a (rough approximation) square using Vincenty's formula (direct)");
+              "Point radius searches are converted to a polygon with a max of {} vertices.",
+              numMultiPointRadiusVertices);
         }
       }
     }

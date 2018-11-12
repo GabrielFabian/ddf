@@ -41,8 +41,7 @@ public class PolygonUtils {
   private PolygonUtils() {}
 
   public static Geometry convertPointRadiusToCirclePolygon(
-      PointRadius pointRadius, int maxVerticies) {
-    double distanceTolerance = 100;
+      PointRadius pointRadius, int maxVerticies, int distanceTolerance) {
     Measure measure = Measure.valueOf(pointRadius.getRadius(), SI.METER);
     Point jtsPoint =
         new GeometryFactory()
@@ -50,59 +49,45 @@ public class PolygonUtils {
 
     TopologyPreservingSimplifier simplifier =
         new TopologyPreservingSimplifier(
-            bufferPoint(measure, DefaultGeographicCRS.WGS84, jtsPoint));
+            createBufferedCircleFromPoint(measure, DefaultGeographicCRS.WGS84, jtsPoint));
 
-    while (simplifier.getResultGeometry().getCoordinates().length > maxVerticies + 1) {
+    int maxVerticiesWithClosedPoint = maxVerticies + 1;
+
+    while (simplifier.getResultGeometry().getCoordinates().length > maxVerticiesWithClosedPoint) {
       simplifier.setDistanceTolerance(distanceTolerance += distanceTolerance);
     }
 
     return simplifier.getResultGeometry();
   }
 
-  public static Geometry bufferPoint(
-      Measure<Double, Length> distance, CoordinateReferenceSystem origCRS, Geometry geom) {
-    Geometry pGeom = geom;
+  private static Geometry createBufferedCircleFromPoint(
+      Measure<Double, Length> distance, CoordinateReferenceSystem origCRS, Geometry point) {
+    Geometry pGeom = point;
     MathTransform toTransform, fromTransform = null;
 
-    // project the geometry as UTM so that a buffer can be accurately applied
     Unit<Length> unit = distance.getUnit();
     if (!(origCRS instanceof ProjectedCRS)) {
 
-      double x = geom.getCoordinate().x;
-      double y = geom.getCoordinate().y;
+      double x = point.getCoordinate().x;
+      double y = point.getCoordinate().y;
 
-      String code = "AUTO:42001," + x + "," + y;
+      String crsCode = "AUTO:42001," + x + "," + y;
 
-      CoordinateReferenceSystem auto;
+      CoordinateReferenceSystem utmCrs;
 
       try {
-        auto = CRS.decode(code);
-        toTransform = CRS.findMathTransform(DefaultGeographicCRS.WGS84, auto);
-        fromTransform = CRS.findMathTransform(auto, DefaultGeographicCRS.WGS84);
-        pGeom = JTS.transform(geom, toTransform);
-        unit = SI.METER;
+        utmCrs = CRS.decode(crsCode);
+        toTransform = CRS.findMathTransform(DefaultGeographicCRS.WGS84, utmCrs);
+        fromTransform = CRS.findMathTransform(utmCrs, DefaultGeographicCRS.WGS84);
+        pGeom = JTS.transform(point, toTransform);
+        return JTS.transform(pGeom.buffer(distance.doubleValue(SI.METER)), fromTransform);
       } catch (MismatchedDimensionException | TransformException | FactoryException e) {
-        LOGGER.debug("e");
-        e.printStackTrace();
+        LOGGER.debug("Unable to transform original CRS to UTM.", e);
       }
-
     } else {
       unit = (Unit<Length>) origCRS.getCoordinateSystem().getAxis(0).getUnit();
     }
 
-    // buffer
-    Geometry out = pGeom.buffer(distance.doubleValue(unit));
-    Geometry retGeom = out;
-    // reproject the geometry to the original projection
-    if (!(origCRS instanceof ProjectedCRS)) {
-      try {
-        retGeom = JTS.transform(out, fromTransform);
-
-      } catch (MismatchedDimensionException | TransformException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
-    }
-    return retGeom;
+    return pGeom.buffer(distance.doubleValue(unit));
   }
 }
