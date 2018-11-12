@@ -3,7 +3,7 @@
     patterns: ['workspaces/:id'],
     component: 'component/content/content.view',
     menu: {
-      component: 'component/workspace-menu/workspace-menu.view',
+      component: 'react-component/container/workspace-menu/workspace-menu',
     },
   },
   home: {
@@ -72,6 +72,14 @@
     component: 'component/search-form-editor/search-form-editor.view',
     menu: {
       text: 'Search Form Editor',
+      classes: 'is-bold',
+    },
+  },
+  openResultForms: {
+    patterns: ['resultForms(/)'],
+    component: 'component/tabs/result-form/tabs.result-form.view',
+    menu: {
+      text: 'Result Forms',
       classes: 'is-bold',
     },
   },

@@ -9,8 +9,7 @@
  * <http://www.gnu.org/licenses/lgpl.html>.
  *
  **/
-type Omit<T, K> = Pick<T, Exclude<keyof T, K>>
-type Subtract<T, K> = Omit<T, keyof K> // so the user of the wrapped component doesn't have to pass in listenTo!
+import { Subtract } from '../../../../typescript'
 
 import * as React from 'react'
 import MarionetteRegionContainer from '../../marionette-region-container'
@@ -32,6 +31,7 @@ export enum Type {
   inputWithParam = 'NEAR',
   text = 'STRING',
   textarea = 'TEXTAREA',
+  password = 'PASSWORD',
 }
 
 /**
@@ -46,6 +46,8 @@ type DownstreamProps = {
   required?: boolean
   showRequiredWarning?: boolean
   transformValue?: boolean
+  className?: string
+  style?: React.CSSProperties
 }
 
 /**
@@ -211,12 +213,15 @@ class BasePropertyWrapper extends React.Component<Props, State> {
     }
   }
   render() {
+    const { className, style } = this.props
     return (
       <MarionetteRegionContainer
         view={PropertyView}
         viewOptions={() => ({
           model: this.propertyModel,
         })}
+        className={className}
+        style={style}
         {...this.props.htmlProps as any}
       />
     )

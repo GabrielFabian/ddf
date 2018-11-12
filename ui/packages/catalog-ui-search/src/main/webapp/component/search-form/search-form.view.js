@@ -27,7 +27,12 @@ const Router = require('component/router/router')
 module.exports = Marionette.LayoutView.extend({
   template: template,
   tagName: CustomElements.register('search-form'),
-  className: 'is-button',
+  className() {
+    return this.model.get('createdBy') === 'system' &&
+      Router.attributes.path === 'forms(/)'
+      ? 'systemSearchForm'
+      : 'is-button'
+  },
   events: {
     click: 'changeView',
   },
@@ -48,21 +53,25 @@ module.exports = Marionette.LayoutView.extend({
       this.model.get('type') === 'basic' ||
       this.model.get('type') === 'text' ||
       this.model.get('type') === 'new-form' ||
-      this.model.get('type') === 'new-result'
+      this.model.get('type') === 'new-result' ||
+      (this.model.get('type') === 'result' &&
+        this.model.get('createdBy') === 'system')
     ) {
       this.$el.addClass('is-static')
     } else {
-      this.searchFormActions.show(
-        new SearchFormInteractionsDropdownView({
-          model: new DropdownModel(),
-          modelForComponent: this.model,
-          collectionWrapperModel: this.options.collectionWrapperModel,
-          queryModel: this.options.queryModel,
-          dropdownCompanionBehaviors: {
-            navigation: {},
-          },
-        })
-      )
+      if (!this.options.hideInteractionMenu) {
+        this.searchFormActions.show(
+          new SearchFormInteractionsDropdownView({
+            model: new DropdownModel(),
+            modelForComponent: this.model,
+            collectionWrapperModel: this.options.collectionWrapperModel,
+            queryModel: this.options.queryModel,
+            dropdownCompanionBehaviors: {
+              navigation: {},
+            },
+          })
+        )
+      }
     }
   },
   changeView: function() {
@@ -96,7 +105,10 @@ module.exports = Marionette.LayoutView.extend({
         user.getQuerySettings().set('type', 'text')
         break
       case 'custom':
-        if (Router.attributes.path === 'forms(/)') {
+        if (
+          Router.attributes.path === 'forms(/)' &&
+          this.model.get('createdBy') !== 'system'
+        ) {
           this.model.set({
             title: this.model.get('name'),
             filterTree: this.model.get('filterTemplate'),
