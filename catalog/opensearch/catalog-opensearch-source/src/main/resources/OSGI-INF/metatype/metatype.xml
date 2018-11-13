@@ -52,7 +52,7 @@
             description="Converts Polygon and Point-Radius searches to a Bounding Box for compatibility with older interfaces. Generated bounding box is a very rough representation of the input geometry."/>
 
         <AD name="Multi Point-Radius polygon approximation vertices" id="numMultiPointRadiusVertices" required="true"
-            type="Integer" default="4"
+            type="Integer" default="32"
             description="When performing a multi point-radius search, increase this value for more accurate polygon approximation."/>
 
         <AD name="Point radius polygon simplification distance tolerance" id="distanceTolerance" required="true"

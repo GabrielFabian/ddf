@@ -84,6 +84,7 @@ import org.codehaus.stax2.XMLInputFactory2;
 import org.codice.ddf.configuration.PropertyResolver;
 import org.codice.ddf.cxf.client.ClientFactoryFactory;
 import org.codice.ddf.cxf.client.SecureCxfClientFactory;
+import org.codice.ddf.libs.geo.util.GeospatialUtil;
 import org.codice.ddf.opensearch.OpenSearch;
 import org.codice.ddf.opensearch.OpenSearchConstants;
 import org.codice.ddf.platform.util.TemporaryFileBackedOutputStream;
@@ -1089,8 +1090,12 @@ public class OpenSearchSource implements FederatedSource, ConfiguredService {
          */
         for (PointRadius search : pointRadiusSearches) {
           Geometry circle =
-              PolygonUtils.convertPointRadiusToCirclePolygon(
-                  search, numMultiPointRadiusVertices, distanceTolerance);
+              GeospatialUtil.createCirclePolygon(
+                  search.getLat(),
+                  search.getLon(),
+                  search.getRadius(),
+                  numMultiPointRadiusVertices,
+                  distanceTolerance);
           combinedGeometrySearches.add(circle);
           LOGGER.debug(
               "Point radius searches are converted to a polygon with a max of {} vertices.",
