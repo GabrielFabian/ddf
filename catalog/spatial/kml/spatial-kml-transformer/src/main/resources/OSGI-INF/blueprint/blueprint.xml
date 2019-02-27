@@ -50,6 +50,7 @@
             <entry key="description"
                    value="Transforms a Metacard to KML for use with Google Earth and other visualization tools."/>
             <entry key="displayName" value="KML"/>
+            <entry key="generateActionProvider" value="false"/>
         </service-properties>
     </service>
 
@@ -127,6 +128,17 @@
                     <value>application/vnd.google-earth.kmz</value>
                 </list>
             </entry>
+        </service-properties>
+    </service>
+
+    <bean id="kmlActionProvider"
+          class="org.codice.ddf.spatial.kml.actions.KmlActionProvider">
+        <argument value="catalog.data.metacard.kml"/>
+    </bean>
+
+    <service ref="kmlActionProvider" interface="ddf.action.ActionProvider">
+        <service-properties>
+            <entry key="id" value="catalog.data.metacard.kml"/>
         </service-properties>
     </service>
 
