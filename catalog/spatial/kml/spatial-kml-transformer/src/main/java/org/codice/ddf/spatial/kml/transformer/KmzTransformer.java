@@ -13,16 +13,7 @@
  */
 package org.codice.ddf.spatial.kml.transformer;
 
-import ddf.catalog.data.Metacard;
-import ddf.catalog.transform.CatalogTransformerException;
 import ddf.catalog.transform.MetacardTransformer;
 import ddf.catalog.transform.QueryResponseTransformer;
-import de.micromata.opengis.kml.v_2_2_0.Placemark;
-import java.io.Serializable;
-import java.util.Map;
-import javax.security.auth.Subject;
 
-public interface KmlTransformer extends QueryResponseTransformer, MetacardTransformer {
-  public Placemark transformEntry(Subject user, Metacard entry, Map<String, Serializable> arguments)
-      throws CatalogTransformerException;
-}
+public interface KmzTransformer extends QueryResponseTransformer, MetacardTransformer {}

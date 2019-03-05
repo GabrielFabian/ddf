@@ -18,8 +18,6 @@ import org.apache.commons.lang.StringUtils;
 import org.codice.ddf.rest.impl.action.MetacardTransformerActionProvider;
 
 public class KmlActionProvider extends MetacardTransformerActionProvider {
-  private static final String TITLE = "kml";
-
   /**
    * Constructor that accepts the values to be used when a new {@link Action} is created by this
    * {@link ddf.action.ActionProvider}.
@@ -27,8 +25,8 @@ public class KmlActionProvider extends MetacardTransformerActionProvider {
    * @param actionProviderId ID that will be assigned to the {@link Action} that will be created.
    *     Cannot be empty or blank.
    */
-  public KmlActionProvider(String actionProviderId) {
-    super(actionProviderId, TITLE);
+  public KmlActionProvider(String actionProviderId, String title) {
+    super(actionProviderId, title);
   }
 
   @Override
