@@ -16,4 +16,6 @@ package org.codice.ddf.spatial.kml.transformer;
 import ddf.catalog.transform.MetacardTransformer;
 import ddf.catalog.transform.QueryResponseTransformer;
 
-public interface KmzTransformer extends QueryResponseTransformer, MetacardTransformer {}
+public interface KmzTransformer extends QueryResponseTransformer, MetacardTransformer {
+
+}

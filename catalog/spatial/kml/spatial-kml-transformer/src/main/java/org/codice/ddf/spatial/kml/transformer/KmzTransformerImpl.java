@@ -18,6 +18,11 @@ import org.codice.ddf.platform.util.TemporaryFileBackedOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
+/**
+ * Transformer for handling requests to take a {@link Metacard} or {@link
+ * SourceResponse} and converting to a zipped KMZ file.
+ */
 public class KmzTransformerImpl implements KmzTransformer {
 
   private static final MimeType KMZ_MIMETYPE;
@@ -34,21 +39,26 @@ public class KmzTransformerImpl implements KmzTransformer {
     }
   }
 
-  private Map<String, BinaryContent> supportingDocuments;
-
   private KmlTransformer kmlTransformer;
 
   public KmzTransformerImpl(KmlTransformer kmlTransformer) {
     this.kmlTransformer = kmlTransformer;
   }
 
+  /**
+   * Transforms a {@link SourceResponse} to a zipped KMZ file.
+   * @param upstreamResponse
+   * @param arguments the arguments that may be used to execute the transform
+   * @return
+   * @throws CatalogTransformerException
+   */
   @Override
   public BinaryContent transform(
       SourceResponse upstreamResponse, Map<String, Serializable> arguments)
       throws CatalogTransformerException {
-
     BinaryContent unzippedKml = kmlTransformer.transform(upstreamResponse, arguments);
     BinaryContent kmz = kmlToKmzTransform(unzippedKml);
+
     if(kmz == null){
       throw new CatalogTransformerException(
               String.format("Unable to transform KML to KMZ."));
@@ -56,6 +66,14 @@ public class KmzTransformerImpl implements KmzTransformer {
     return kmz;
   }
 
+  /**
+   * Transforms a single metacard to a zipped KMZ file.
+   * @param metacard the {@link Metacard} to be transformed
+   * @param arguments any arguments to be used in the transformation. Keys are specific to each
+   *     {@link MetacardTransformer} implementation
+   * @return
+   * @throws CatalogTransformerException
+   */
   @Override
   public BinaryContent transform(Metacard metacard, Map<String, Serializable> arguments)
       throws CatalogTransformerException {
@@ -69,7 +87,14 @@ public class KmzTransformerImpl implements KmzTransformer {
     return kmz;
   }
 
-  private BinaryContent kmlToKmzTransform(BinaryContent unzippedKml) {
+  /**
+   * Converts an unzipped KML file packaged as a {@link BinaryContent}
+   * to a zipped KMZ file.
+   *
+   * @param unzippedKml - unzipped kml {@link BinaryContent}
+   * @return BinaryContent - zipped KML file containing KML data.
+   */
+  protected BinaryContent kmlToKmzTransform(BinaryContent unzippedKml) {
     InputStream inputStream = unzippedKml.getInputStream();
     TemporaryFileBackedOutputStream temporaryFileBackedOutputStream =
         new TemporaryFileBackedOutputStream();
