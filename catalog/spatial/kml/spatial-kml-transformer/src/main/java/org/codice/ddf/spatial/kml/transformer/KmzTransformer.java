@@ -13,9 +13,10 @@
  */
 package org.codice.ddf.spatial.kml.transformer;
 
+import ddf.catalog.data.BinaryContent;
 import ddf.catalog.transform.MetacardTransformer;
 import ddf.catalog.transform.QueryResponseTransformer;
 
 public interface KmzTransformer extends QueryResponseTransformer, MetacardTransformer {
-
+  BinaryContent kmlToKmzTransform(BinaryContent unzippedKml);
 }

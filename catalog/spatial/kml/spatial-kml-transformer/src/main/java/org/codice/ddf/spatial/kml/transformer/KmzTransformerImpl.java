@@ -1,3 +1,16 @@
+/**
+ * Copyright (c) Codice Foundation
+ *
+ * <p>This is free software: you can redistribute it and/or modify it under the terms of the GNU
+ * Lesser General Public License as published by the Free Software Foundation, either version 3 of
+ * the License, or any later version.
+ *
+ * <p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details. A copy of the GNU Lesser General Public
+ * License is distributed along with this program and can be found at
+ * <http://www.gnu.org/licenses/lgpl.html>.
+ */
 package org.codice.ddf.spatial.kml.transformer;
 
 import ddf.catalog.data.BinaryContent;
@@ -18,10 +31,9 @@ import org.codice.ddf.platform.util.TemporaryFileBackedOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 /**
- * Transformer for handling requests to take a {@link Metacard} or {@link
- * SourceResponse} and converting to a zipped KMZ file.
+ * Transformer for handling requests to take a {@link Metacard} or {@link SourceResponse} and
+ * converting to a zipped KMZ file.
  */
 public class KmzTransformerImpl implements KmzTransformer {
 
@@ -47,6 +59,7 @@ public class KmzTransformerImpl implements KmzTransformer {
 
   /**
    * Transforms a {@link SourceResponse} to a zipped KMZ file.
+   *
    * @param upstreamResponse
    * @param arguments the arguments that may be used to execute the transform
    * @return
@@ -59,15 +72,15 @@ public class KmzTransformerImpl implements KmzTransformer {
     BinaryContent unzippedKml = kmlTransformer.transform(upstreamResponse, arguments);
     BinaryContent kmz = kmlToKmzTransform(unzippedKml);
 
-    if(kmz == null){
-      throw new CatalogTransformerException(
-              String.format("Unable to transform KML to KMZ."));
+    if (kmz == null) {
+      throw new CatalogTransformerException(String.format("Unable to transform KML to KMZ."));
     }
     return kmz;
   }
 
   /**
    * Transforms a single metacard to a zipped KMZ file.
+   *
    * @param metacard the {@link Metacard} to be transformed
    * @param arguments any arguments to be used in the transformation. Keys are specific to each
    *     {@link MetacardTransformer} implementation
@@ -80,27 +93,26 @@ public class KmzTransformerImpl implements KmzTransformer {
     BinaryContent unzippedKml = kmlTransformer.transform(metacard, arguments);
     BinaryContent kmz = kmlToKmzTransform(unzippedKml);
 
-    if(kmz == null) {
+    if (kmz == null) {
       throw new CatalogTransformerException(
-              String.format("Unable to transform to KMZ for metacard ID: %s", metacard.getId()));
+          String.format("Unable to transform to KMZ for metacard ID: %s", metacard.getId()));
     }
     return kmz;
   }
 
   /**
-   * Converts an unzipped KML file packaged as a {@link BinaryContent}
-   * to a zipped KMZ file.
+   * Converts an unzipped KML file packaged as a {@link BinaryContent} to a zipped KMZ file.
    *
    * @param unzippedKml - unzipped kml {@link BinaryContent}
    * @return BinaryContent - zipped KML file containing KML data.
    */
-  protected BinaryContent kmlToKmzTransform(BinaryContent unzippedKml) {
-    InputStream inputStream = unzippedKml.getInputStream();
-    TemporaryFileBackedOutputStream temporaryFileBackedOutputStream =
-        new TemporaryFileBackedOutputStream();
-    ZipOutputStream zipOutputStream = new ZipOutputStream(temporaryFileBackedOutputStream);
-
+  public BinaryContent kmlToKmzTransform(BinaryContent unzippedKml) {
     try {
+      InputStream inputStream = unzippedKml.getInputStream();
+      TemporaryFileBackedOutputStream temporaryFileBackedOutputStream =
+          new TemporaryFileBackedOutputStream();
+      ZipOutputStream zipOutputStream = new ZipOutputStream(temporaryFileBackedOutputStream);
+
       final ZipEntry e = new ZipEntry(DOC_KML);
       zipOutputStream.putNextEntry(e);
       IOUtils.copy(inputStream, zipOutputStream);

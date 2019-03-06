@@ -13,105 +13,126 @@
  */
 package org.codice.ddf.spatial.kml.transformer;
 
-import ddf.catalog.data.BinaryContent;
-import ddf.catalog.data.impl.BinaryContentImpl;
-import org.junit.Before;
-import org.junit.Test;
-import org.apache.commons.io.IOUtils;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-
-import javax.activation.MimeType;
-import javax.activation.MimeTypeParseException;
-
-import static org.hamcrest.core.Is.is;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyMap;
+import static org.mockito.Mockito.when;
 
+import ddf.catalog.data.BinaryContent;
+import ddf.catalog.data.Metacard;
+import ddf.catalog.data.impl.BinaryContentImpl;
+import ddf.catalog.operation.SourceResponse;
+import ddf.catalog.transform.CatalogTransformerException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import javax.activation.MimeType;
+import javax.activation.MimeTypeParseException;
+import org.apache.commons.io.IOUtils;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class KmzTransformerImplTest {
 
-    private KmzTransformerImpl kmzTransformer;
+  private KmzTransformerImpl kmzTransformer;
 
-    @Mock
-    private KmlTransformerImpl kmlTransformer;
+  private static final String KML_EXTENSION = ".kml";
 
-    static final String KML_EXTENSION = ".kml";
+  private MimeType kmzMimetype;
 
-    private static MimeType KMZ_MIMETYPE;
+  @Mock private KmlTransformerImpl kmlTransformer;
 
-    @Before
-    public void setup() throws IOException, MimeTypeParseException {
-        kmzTransformer = new KmzTransformerImpl(kmlTransformer);
-        KMZ_MIMETYPE = new MimeType("application/vnd.google-earth.kmz");
-    }
+  @Mock private Metacard mockMetacard;
 
-    @Test
-    public void testKmlToKmzTransform() throws IOException {
-        final InputStream resourceAsStream = this.getClass().getResourceAsStream("/kmlPoint.kml");
-        BinaryContent inputKmlFile = new BinaryContentImpl(resourceAsStream);
-        BinaryContent kmz = kmzTransformer.kmlToKmzTransform(inputKmlFile);
-        assertThat(kmz.getMimeType().match(KMZ_MIMETYPE), is(true));
+  @Mock private SourceResponse mockSourceResponse;
 
-        String outputKml = getOutputFromBinaryContent(kmz);
-        assertThat(outputKml, is(resourceToString("/kmlPoint.kml")));
-    }
+  @Before
+  public void setup() throws IOException, MimeTypeParseException {
+    kmzTransformer = new KmzTransformerImpl(kmlTransformer);
+    kmzMimetype = new MimeType("application/vnd.google-earth.kmz");
+  }
 
-    @Test
-    public void testQueryResponseTransformation() throws IOException {
-        //TODO
-        assert true;
-    }
+  @Test
+  public void testKmlToKmzTransform() throws IOException {
+    final InputStream resourceAsStream = this.getClass().getResourceAsStream("/kmlPoint.kml");
+    BinaryContent inputKmlFile = new BinaryContentImpl(resourceAsStream);
+    BinaryContent kmz = kmzTransformer.kmlToKmzTransform(inputKmlFile);
+    assertThat(kmz.getMimeType().match(kmzMimetype), is(true));
 
-    @Test
-    public void testMetacardTransformation() throws IOException {
-        //TODO
-        assert true;
-    }
+    String outputKml = getOutputFromBinaryContent(kmz);
+    assertThat(outputKml, is(resourceToString("/kmlPoint.kml")));
+  }
 
-    private InputStream getResourceAsStream(String resourcePath) {
-        return this.getClass().getResourceAsStream(resourcePath);
-    }
+  @Test
+  public void testKmzMetacardTransform() throws CatalogTransformerException, IOException {
+    final InputStream resourceAsStream = this.getClass().getResourceAsStream("/kmlPoint.kml");
+    BinaryContent inputKmlFile = new BinaryContentImpl(resourceAsStream);
+    when(kmlTransformer.transform(any(Metacard.class), anyMap())).thenReturn(inputKmlFile);
 
-    private String getOutputFromBinaryContent(BinaryContent binaryContent) throws IOException {
-        // BC is a kmz zip file containing a single kml file called doc.kml.
-        // Optionally, relative file links will exist in folder called files
-        String outputKml;
-        try (ZipInputStream zipInputStream = new ZipInputStream(binaryContent.getInputStream())) {
+    BinaryContent kmz = kmzTransformer.transform(mockMetacard, new HashMap<>());
+    assertThat(kmz.getMimeType().match(kmzMimetype), is(true));
 
-            ZipEntry entry;
-            outputKml = "";
-            while ((entry = zipInputStream.getNextEntry()) != null) {
+    String outputKml = getOutputFromBinaryContent(kmz);
+    assertThat(outputKml, is(resourceToString("/kmlPoint.kml")));
+  }
 
-                // According to Google, a .kmz should only contain a single .kml file
-                // so we stop at the first one we find.
-                final String fileName = entry.getName();
-                if (fileName.endsWith(KML_EXTENSION)) {
-                    assertThat(fileName, is("doc.kml"));
-                    outputKml = readContentsFromZipInputStream(zipInputStream);
-                    break;
-                }
-            }
+  @Test
+  public void testKmzSourceResponseTransform() throws CatalogTransformerException, IOException {
+    final InputStream resourceAsStream = this.getClass().getResourceAsStream("/multiPlacemark.kml");
+    BinaryContent inputKmlFile = new BinaryContentImpl(resourceAsStream);
+    when(kmlTransformer.transform(any(SourceResponse.class), anyMap())).thenReturn(inputKmlFile);
+
+    BinaryContent kmz = kmzTransformer.transform(mockSourceResponse, new HashMap<>());
+    assertThat(kmz.getMimeType().match(kmzMimetype), is(true));
+
+    String outputKml = getOutputFromBinaryContent(kmz);
+    assertThat(outputKml, is(resourceToString("/multiPlacemark.kml")));
+  }
+
+  private InputStream getResourceAsStream(String resourcePath) {
+    return this.getClass().getResourceAsStream(resourcePath);
+  }
+
+  private String getOutputFromBinaryContent(BinaryContent binaryContent) throws IOException {
+    // BC is a kmz zip file containing a single kml file called doc.kml.
+    // Optionally, relative file links will exist in folder called files
+    String outputKml;
+    try (ZipInputStream zipInputStream = new ZipInputStream(binaryContent.getInputStream())) {
+
+      ZipEntry entry;
+      outputKml = "";
+      while ((entry = zipInputStream.getNextEntry()) != null) {
+
+        // According to Google, a .kmz should only contain a single .kml file
+        // so we stop at the first one we find.
+        final String fileName = entry.getName();
+        if (fileName.endsWith(KML_EXTENSION)) {
+          assertThat(fileName, is("doc.kml"));
+          outputKml = readContentsFromZipInputStream(zipInputStream);
+          break;
         }
-        return outputKml;
+      }
     }
+    return outputKml;
+  }
 
-    private String resourceToString(String resourceName) throws IOException {
-        try (final InputStream inputStream = getResourceAsStream(resourceName)) {
-            return IOUtils.toString(inputStream, StandardCharsets.UTF_8.name());
-        }
+  private String resourceToString(String resourceName) throws IOException {
+    try (final InputStream inputStream = getResourceAsStream(resourceName)) {
+      return IOUtils.toString(inputStream, StandardCharsets.UTF_8.name());
     }
+  }
 
-    private String readContentsFromZipInputStream(ZipInputStream zipInputStream) throws IOException {
-        String s = IOUtils.toString(zipInputStream, StandardCharsets.UTF_8.name());
-        IOUtils.closeQuietly(zipInputStream);
-        return s;
-    }
-
+  private String readContentsFromZipInputStream(ZipInputStream zipInputStream) throws IOException {
+    String s = IOUtils.toString(zipInputStream, StandardCharsets.UTF_8.name());
+    IOUtils.closeQuietly(zipInputStream);
+    return s;
+  }
 }
